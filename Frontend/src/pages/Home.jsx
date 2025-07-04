@@ -15,18 +15,21 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useAuth } from "@/context/AuthContext";
 
 const Home = () => {
-    
+    console.log("Home");
+    const { user, setUserData, setLoggedIdFlag } = useAuth();
     const [loading, setLoading] = useState(false);
     const [allBlogs, setAllBlogs] = useState([]);
-    const [userData, setUserData] = useState({})
     const [updatedName, setUpdatedName] = useState();
 
     const navigate = useNavigate();
 
+    console.log(`Inside Home.jsx: ${JSON.stringify(user)}`);
 
     const fetchAllBlog = async () => {
+        setLoading(true);
         try {
             const response = await fetch("http://localhost:8000/api/v1/blog/", {
                 method: "GET",
@@ -47,6 +50,8 @@ const Home = () => {
             }
         } catch (error) {
             console.log(`Error: ${error}`);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -59,7 +64,7 @@ const Home = () => {
     };
 
     const handleChanges = async () => {
-        console.log("handle changes run...")
+        console.log("handle changes run...");
         fetch("http://localhost:8000/api/v1/user/update", {
             method: "POST",
             credentials: "include",
@@ -72,8 +77,8 @@ const Home = () => {
             .then((res) => res.json())
             .then((data) => {
                 if (data.success) {
-                    toast(data.message)
-                    me()
+                    setUserData(data?.updatedUser);
+                    toast(data.message);
                 }
             })
             .catch((err) => {
@@ -93,6 +98,9 @@ const Home = () => {
             .then((res) => res.json())
             .then((data) => {
                 if (data.success) {
+                    setUserData({});
+                    setLoggedIdFlag(false)
+                    localStorage.removeItem("token")
                     navigate("/");
                 }
             })
@@ -101,36 +109,15 @@ const Home = () => {
             });
     };
 
-    const me = () => {
-        setLoading(true);
-
-        fetch("http://localhost:8000/api/v1/user/me", {
-            method: "GET",
-            credentials: "include",
-            headers: {
-                "Content-Type": "application/json",
-                accept: "application/json",
-            },
-        })
-            .then((res) => res.json())
-            .then((data) => {
-                if (data.success) {
-                    fetchAllBlog()
-                    setUserData(data.user);
-                    setUpdatedName(data?.user?.name)
-                }
-            })
-            .catch((err) => {
-                console.log(`Error: ${err}`);
-            })
-            .finally(() => {
-                setLoading(false);
-            });
-    };
+    useEffect(() => {
+        fetchAllBlog();
+    }, []);
 
     useEffect(() => {
-       me()
-    }, []);
+        if (user) {
+            setUpdatedName(user?.name);
+        }
+    }, [user]);
 
     return loading ? (
         <div className="w-full h-screen bg-black text-white flex items-center justify-center">
@@ -152,7 +139,7 @@ const Home = () => {
                         </Button>
                     </div>
                     <div className="flex items-center justify-center gap-5">
-                        <h3>{userData?.name || "Undefined"}</h3>
+                        <h3>{user?.name || "Undefined"}</h3>
                         <div className="w-8 h-8 overflow-hidden">
                             <Dialog>
                                 <form>
@@ -174,6 +161,7 @@ const Home = () => {
                                         <div className="grid gap-4">
                                             <div className="grid gap-3">
                                                 <Label htmlFor="name-1">Name</Label>
+
                                                 <Input
                                                     id="name-1"
                                                     name="name"
@@ -186,7 +174,9 @@ const Home = () => {
                                             <DialogClose asChild>
                                                 <Button variant="outline">Cancel</Button>
                                             </DialogClose>
-                                            <Button onClick={handleChanges} type="submit">Save changes</Button>
+                                            <Button onClick={handleChanges} type="submit">
+                                                Save changes
+                                            </Button>
                                         </DialogFooter>
                                     </DialogContent>
                                 </form>

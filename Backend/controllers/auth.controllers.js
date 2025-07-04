@@ -92,6 +92,7 @@ const login = async (req, res) => {
         return res.status(200).cookie("token", token, options).json({
             message: "User loggedIn successfully",
             loggedInUser,
+            token,
             success: true,
         });
     } catch (error) {
@@ -121,9 +122,17 @@ const updateProfile = async (req, res) => {
             });
         }
 
-        const updatedUser = await User.findByIdAndUpdate(user._id, {
+        const oldUserData = await User.findByIdAndUpdate(user._id, {
             name: updatedName,
         });
+
+        if (!oldUserData) {
+            return res.status(400).json({
+                message: "User does not exists",
+            });
+        }
+
+        const updatedUser = await User.findById(oldUserData._id)
 
         if (!updatedUser) {
             return res.status(400).json({
@@ -133,6 +142,7 @@ const updateProfile = async (req, res) => {
 
         return res.status(200).json({
             message: "User Profile Updated successfully",
+            updatedUser,
             success: true,
         });
     } catch (error) {
