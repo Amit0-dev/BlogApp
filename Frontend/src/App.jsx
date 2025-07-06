@@ -16,13 +16,9 @@ function App() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        if (token && !loggedIn) navigate("/home");
-    }, [token, loggedIn]);
-
-    useEffect(() => {
-        console.log("App useEffect run !");
+      
         if (token) {
-            console.log("Request for me inside app.jsx");
+          
             fetch("http://localhost:8000/api/v1/user/me", {
                 method: "GET",
                 credentials: "include",
@@ -31,15 +27,23 @@ function App() {
                     accept: "application/json",
                 },
             })
-                .then((res) => res.json())
+                .then((res) => {
+                    if (res.status === 401) {
+                        localStorage.removeItem("token");
+                        navigate("/");
+                    }
+                    return res.json();
+                })
                 .then((data) => {
                     if (data.success) {
                         // update state
                         setUserData(data?.user);
+                        navigate("/home");
                     }
                 })
                 .catch((err) => {
                     console.log(`Error: ${err}`);
+                   
                 });
         }
     }, []);

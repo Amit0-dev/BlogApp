@@ -26,7 +26,7 @@ const Home = () => {
 
     const navigate = useNavigate();
 
-    console.log(`Inside Home.jsx: ${JSON.stringify(user)}`);
+   
 
     const fetchAllBlog = async () => {
         setLoading(true);
@@ -64,7 +64,7 @@ const Home = () => {
     };
 
     const handleChanges = async () => {
-        console.log("handle changes run...");
+        
         fetch("http://localhost:8000/api/v1/user/update", {
             method: "POST",
             credentials: "include",

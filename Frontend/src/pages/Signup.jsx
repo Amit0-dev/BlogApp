@@ -24,7 +24,7 @@ const Signup = () => {
 
     const handleSubmit = async (e) => {
         try {
-            console.log("function called");
+          
             e.preventDefault();
             setLoading(true);
 

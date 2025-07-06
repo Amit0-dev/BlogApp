@@ -3,11 +3,8 @@ import { Blog } from "../models/blog.model.js";
 import { isValidObjectId } from "mongoose";
 
 const createBlog = async (req, res) => {
-    
     try {
-        
         const { title, content } = req.body;
-        
 
         if (!title || !content) {
             return res.status(400).json({
@@ -80,20 +77,10 @@ const updateBlog = async (req, res) => {
 
         const coverImageLocalPath = req.file?.path;
 
-        if (!coverImageLocalPath) {
-            return res.status(400).json({
-                message: "coverImage is required",
-            });
-        }
-
         // upload on cloudinary
-
-        const image = await uploadOnCloudinary(coverImageLocalPath);
-
-        if (!image.url) {
-            return res.status(400).json({
-                message: "Something went wrong while uploading the file on cloudinary",
-            });
+        let image;
+        if (coverImageLocalPath) {
+            image = await uploadOnCloudinary(coverImageLocalPath);
         }
 
         const blog = await Blog.findById(id);
@@ -106,40 +93,75 @@ const updateBlog = async (req, res) => {
 
         //delete the old coverImage from cloudinary
 
-        const oldCoverImageUrl = blog?.coverImage;
-        if (!oldCoverImageUrl) {
-            return res.status(400).json({
-                message: "coverImage does not exists in blog",
+        if (image?.url) {
+            const oldCoverImageUrl = blog?.coverImage;
+            if (!oldCoverImageUrl) {
+                return res.status(400).json({
+                    message: "coverImage does not exists in blog",
+                });
+            }
+
+            const publicId = getPublicId(oldCoverImageUrl);
+
+            if (!publicId) {
+                return res.status(400).json({
+                    message: "Something went wrong while generating coverImage publicId",
+                });
+            }
+
+            await deleteMediaOnCloudinary(publicId);
+
+            const oldBlogDocument = await Blog.findByIdAndUpdate(id, {
+                title,
+                content,
+                coverImage: image?.url,
+            });
+
+            if (!oldBlogDocument) {
+                return res.status(400).json({
+                    message: "Blog not updated something went wrong",
+                });
+            }
+
+            const updatedBlog = await Blog.findById(oldBlogDocument?._id);
+
+            if (!updatedBlog) {
+                return res.status(400).json({
+                    message: "Blog does not exists",
+                });
+            }
+
+            return res.status(200).json({
+                message: "Blog updated successfully",
+                success: true,
+                updatedBlog,
+            });
+        } else {
+            const oldBlogDocument = await Blog.findByIdAndUpdate(id, {
+                title,
+                content,
+            });
+
+            if (!oldBlogDocument) {
+                return res.status(400).json({
+                    message: "Blog not updated something went wrong",
+                });
+            }
+
+            const updatedBlog = await Blog.findById(oldBlogDocument?._id);
+
+            if (!updatedBlog) {
+                return res.status(400).json({
+                    message: "Blog does not exists",
+                });
+            }
+
+            return res.status(200).json({
+                message: "Blog updated successfully",
+                success: true,
+                updatedBlog,
             });
         }
-
-        const publicId = getPublicId(oldCoverImageUrl);
-
-        if (!publicId) {
-            return res.status(400).json({
-                message: "Something went wrong while generating coverImage publicId",
-            });
-        }
-
-        await deleteMediaOnCloudinary(publicId);
-
-        const BlogDocument = await Blog.findByIdAndUpdate(id, {
-            title,
-            content,
-            coverImage: image?.url,
-        });
-
-        if (!BlogDocument) {
-            return res.status(400).json({
-                message: "Blog not updated something went wrong",
-            });
-        }
-
-        return res.status(200).json({
-            message: "Blog updated successfully",
-            success: true,
-            BlogDocument,
-        });
     } catch (error) {
         return res.status(400).json({
             message: "Blog not updated",
@@ -184,9 +206,7 @@ const deleteBlog = async (req, res) => {
     });
 };
 const getBlogById = async (req, res) => {
-   
     const { id } = req.params;
-   
 
     if (!isValidObjectId(id)) {
         return res.status(400).json({

@@ -30,9 +30,11 @@ db()
 // import routes
 import userRoutes from "./routes/auth.routes.js";
 import blogRoutes from "./routes/blog.routes.js";
+import commentRoutes from "./routes/comment.routes.js"
 
 app.use("/api/v1/user", userRoutes);
 app.use("/api/v1/blog", blogRoutes);
+app.use("/api/v1/comment", commentRoutes);
 
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
