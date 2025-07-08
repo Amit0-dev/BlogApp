@@ -202,7 +202,7 @@ const Home = () => {
                             />
                         </div>
                         <div className="w-full h-[30%] flex items-center justify-center">
-                            {blog.title}
+                            <h5 className="leading-4 text-sm">{blog.title}</h5>
                         </div>
                     </div>
                 ))}

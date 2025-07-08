@@ -278,7 +278,7 @@ const Blog = () => {
                     
                     {blogData && user && (
                         blogData?.author === user?._id &&(
-                        <div className="absolute top-16 right-32 flex gap-5">
+                        <div className="absolute top-60 right-32 flex gap-5">
                             <Dialog open={isOpen} onOpenChange={(open) => setIsOpen(open)}>
                                 <form>
                                     <DialogTrigger asChild>
